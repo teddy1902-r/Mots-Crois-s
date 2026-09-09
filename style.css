@@ -61,63 +61,97 @@ button.secondary {
   color: #596476;
 }
 
-/* Grille */
+/* =========================
+   GRILLE
+   ========================= */
+
 .board {
   position: relative;
-  width: min(100%, 1470px);
+  width: 100%;
+  max-width: 1500px;
   margin: 0 auto;
 
-  /* IMPORTANT : image présente dans le même dossier */
   background-image: url("grille.png");
   background-repeat: no-repeat;
   background-position: center;
   background-size: 100% 100%;
 
-  aspect-ratio: 1500 / 974;
+  /*
+    14 colonnes × 9 lignes
+    Les dimensions restent identiques
+    jusqu'à la dernière case.
+  */
+  aspect-ratio: 14 / 9;
+
+  overflow: hidden;
 }
 
-/* Cases où l'utilisateur peut écrire */
+/* =========================
+   CASES SAISISSABLES
+   ========================= */
+
 .cell {
   position: absolute;
 
-  /* 14 colonnes */
-  width: 7.142857%;
+  width: calc(100% / 14);
+  height: calc(100% / 9);
 
-  /* 9 lignes */
-  height: 11.111111%;
+  margin: 0;
+  padding: 0;
 
   border: 0;
+  outline: none;
+
   background: transparent;
 
-  text-align: center;
-  text-transform: uppercase;
+  z-index: 10;
+  pointer-events: auto;
+  cursor: text;
 
+  /* Centrage horizontal */
+  text-align: center;
+
+  /* Centrage vertical */
+  line-height: 1;
+
+  /* Texte */
+  text-transform: uppercase;
   font-size: clamp(16px, 2.6vw, 32px);
   font-weight: 800;
+  font-family: Arial, Helvetica, sans-serif;
   color: #172033;
 
-  outline: none;
-  padding: 0;
+  /* Centrage parfait */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Case sélectionnée */
+
 .cell:focus {
-  background: rgba(255, 248, 168, 0.8);
+  background: rgba(255, 248, 168, 0.75);
   box-shadow: inset 0 0 0 3px #173b70;
 }
 
 /* Bonne réponse */
+
 .cell.correct {
   background: rgba(191, 231, 197, 0.6);
 }
 
 /* Mauvaise réponse */
+
 .cell.wrong {
   background: rgba(255, 197, 197, 0.6);
 }
 
-/* Téléphone / petit écran */
+/* =========================
+   PETITS ÉCRANS
+   ========================= */
+
 @media (max-width: 700px) {
+
   main {
     padding: 8px;
   }
@@ -129,6 +163,7 @@ button.secondary {
 
   .board {
     width: 100%;
+    aspect-ratio: 14 / 9;
   }
 
   .cell {
@@ -136,8 +171,12 @@ button.secondary {
   }
 }
 
-/* Impression */
+/* =========================
+   IMPRESSION
+   ========================= */
+
 @media print {
+
   header,
   .toolbar {
     display: none;
@@ -157,5 +196,6 @@ button.secondary {
 
   .board {
     width: 100%;
+    max-width: none;
   }
 }
