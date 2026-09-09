@@ -1,7 +1,27 @@
-const COLS = 14;
 const ROWS = 9;
+const COLS = 14;
 
-/* Cases réservées aux indices : elles ne sont pas saisissables */
+const board = document.getElementById("board");
+const status = document.getElementById("status");
+
+/*
+  Positions EXACTES relevées sur ton image.
+  L'image fait 1555 × 1012 pixels.
+*/
+const X = [
+  28, 135, 244, 353, 461, 567, 675,
+  786, 893, 1001, 1107, 1216, 1323, 1432, 1538
+];
+
+const Y = [
+  22, 132, 240, 347, 454,
+  561, 667, 774, 885, 990
+];
+
+/*
+  Cases contenant les indices.
+  Elles restent non saisissables.
+*/
 const blocked = new Set([
   "0,0", "0,2", "0,4", "0,6", "0,8", "0,10", "0,12",
   "1,10",
@@ -14,32 +34,28 @@ const blocked = new Set([
   "8,0", "8,7"
 ]);
 
-/* Solution de la grille */
+/*
+  Solutions.
+*/
 const solution = [
-  [null, "S", null, "P", null, "E", null, "K", null, "B", null, "G", null, "G"],
-  ["D", "E", "T", "R", "A", "C", "T", "E", "U", "R", null, "R", "A", "I"],
-  [null, "C", "R", "O", "I", "R", "E", null, "R", "I", "R", "A", "I", "S"],
-  ["C", "H", "A", "N", "G", "E", null, "B", "E", "S", "A", "C", "E", null],
-  [null, "E", "C", "O", "U", "T", "A", "I", null, "E", "S", "E", null, "C"],
-  ["A", "R", "T", "S", null, "E", "I", "D", "E", "R", "S", null, "T", "A"],
-  [null, null, "E", "T", "E", "R", "N", "E", "L", null, "I", "R", "A", "N"],
-  ["C", "A", "R", "I", "S", null, "E", "T", "U", "V", "E", null, "P", "O"],
-  [null, "C", "A", "C", "T", "U", "S", null, "S", "E", "D", "U", "I", "T"]
+  [null,"S",null,"P",null,"E",null,"K",null,"B",null,"G",null,"G"],
+  ["D","E","T","R","A","C","T","E","U","R",null,"R","A","I"],
+  [null,"C","R","O","I","R","E",null,"R","I","R","A","I","S"],
+  ["C","H","A","N","G","E",null,"B","E","S","A","C","E",null],
+  [null,"E","C","O","U","T","A","I",null,"E","S","E",null,"C"],
+  ["A","R","T","S",null,"E","I","D","E","R","S",null,"T","A"],
+  [null,null,"E","T","E","R","N","E","L",null,"I","R","A","N"],
+  ["C","A","R","I","S",null,"E","T","U","V","E",null,"P","O"],
+  [null,"C","A","C","T","U","S",null,"S","E","D","U","I","T"]
 ];
 
-const board = document.getElementById("board");
-const status = document.getElementById("status");
-
-/* Clé utilisée pour sauvegarder chaque lettre */
-function storageKey(row, col) {
-  return `mots-croises-r${row}c${col}`;
-}
-
-/* Création des cases */
+/*
+  Création des cases.
+*/
 for (let row = 0; row < ROWS; row++) {
+
   for (let col = 0; col < COLS; col++) {
 
-    /* Les cases d'indices restent bloquées */
     if (blocked.has(`${row},${col}`)) {
       continue;
     }
@@ -48,6 +64,7 @@ for (let row = 0; row < ROWS; row++) {
 
     input.type = "text";
     input.className = "cell";
+
     input.maxLength = 1;
     input.autocomplete = "off";
     input.spellcheck = false;
@@ -55,41 +72,52 @@ for (let row = 0; row < ROWS; row++) {
     input.dataset.r = row;
     input.dataset.c = col;
 
-    /* Positionnement dans la grille */
-    input.style.left = `${col * 100 / COLS}%`;
-    input.style.top = `${row * 100 / ROWS}%`;
+    /*
+      Position exacte basée sur l'image.
+    */
+    input.style.left = `${X[col] / 1555 * 100}%`;
+    input.style.top = `${Y[row] / 1012 * 100}%`;
 
-    /* Récupérer une ancienne réponse */
-    input.value = localStorage.getItem(storageKey(row, col)) || "";
+    input.style.width =
+      `${(X[col + 1] - X[col]) / 1555 * 100}%`;
 
-    /* Quand on écrit une lettre */
+    input.style.height =
+      `${(Y[row + 1] - Y[row]) / 1012 * 100}%`;
+
+    /*
+      Récupérer une réponse déjà enregistrée.
+    */
+    input.value =
+      localStorage.getItem(storageKey(row, col)) || "";
+
+    /*
+      Écriture d'une lettre.
+    */
     input.addEventListener("input", function () {
 
-      /* Une seule lettre, en majuscule */
       this.value = this.value
         .replace(/[^a-zA-ZÀ-ÿ]/g, "")
         .slice(-1)
         .toUpperCase();
 
-      /* Sauvegarde automatique */
       localStorage.setItem(
         storageKey(row, col),
         this.value
       );
 
-      /* Enlever la couleur précédente */
       this.classList.remove("correct", "wrong");
 
       updateStatus();
 
-      /* Passer automatiquement à la case suivante */
       if (this.value !== "") {
         goNext(row, col);
       }
     });
 
-    /* Navigation avec les flèches du clavier */
-    input.addEventListener("keydown", function (event) {
+    /*
+      Navigation avec les flèches.
+    */
+    input.addEventListener("keydown", function(event) {
 
       if (event.key === "ArrowRight") {
         event.preventDefault();
@@ -111,7 +139,6 @@ for (let row = 0; row < ROWS; row++) {
         focusCell(row - 1, col);
       }
 
-      /* Retour arrière */
       if (event.key === "Backspace" && this.value === "") {
         focusPrevious(row, col);
       }
@@ -121,10 +148,24 @@ for (let row = 0; row < ROWS; row++) {
   }
 }
 
-/* Aller sur une case précise */
+/*
+  Clé de sauvegarde.
+*/
+function storageKey(row, col) {
+  return `mots-croises-r${row}c${col}`;
+}
+
+/*
+  Sélectionner une case.
+*/
 function focusCell(row, col) {
 
-  if (row < 0 || row >= ROWS || col < 0 || col >= COLS) {
+  if (
+    row < 0 ||
+    row >= ROWS ||
+    col < 0 ||
+    col >= COLS
+  ) {
     return;
   }
 
@@ -141,55 +182,59 @@ function focusCell(row, col) {
   }
 }
 
-/* Aller à la case suivante */
+/*
+  Case suivante.
+*/
 function goNext(row, col) {
 
-  /* Chercher vers la droite */
-  for (let nextCol = col + 1; nextCol < COLS; nextCol++) {
+  for (let c = col + 1; c < COLS; c++) {
 
-    if (!blocked.has(`${row},${nextCol}`)) {
-      focusCell(row, nextCol);
+    if (!blocked.has(`${row},${c}`)) {
+      focusCell(row, c);
       return;
     }
   }
 
-  /* Puis passer à la ligne suivante */
-  for (let nextRow = row + 1; nextRow < ROWS; nextRow++) {
+  for (let r = row + 1; r < ROWS; r++) {
 
-    for (let nextCol = 0; nextCol < COLS; nextCol++) {
+    for (let c = 0; c < COLS; c++) {
 
-      if (!blocked.has(`${nextRow},${nextCol}`)) {
-        focusCell(nextRow, nextCol);
+      if (!blocked.has(`${r},${c}`)) {
+        focusCell(r, c);
         return;
       }
     }
   }
 }
 
-/* Retour à la case précédente */
+/*
+  Case précédente.
+*/
 function focusPrevious(row, col) {
 
-  for (let previousCol = col - 1; previousCol >= 0; previousCol--) {
+  for (let c = col - 1; c >= 0; c--) {
 
-    if (!blocked.has(`${row},${previousCol}`)) {
-      focusCell(row, previousCol);
+    if (!blocked.has(`${row},${c}`)) {
+      focusCell(row, c);
       return;
     }
   }
 
-  for (let previousRow = row - 1; previousRow >= 0; previousRow--) {
+  for (let r = row - 1; r >= 0; r--) {
 
-    for (let previousCol = COLS - 1; previousCol >= 0; previousCol--) {
+    for (let c = COLS - 1; c >= 0; c--) {
 
-      if (!blocked.has(`${previousRow},${previousCol}`)) {
-        focusCell(previousRow, previousCol);
+      if (!blocked.has(`${r},${c}`)) {
+        focusCell(r, c);
         return;
       }
     }
   }
 }
 
-/* Compteur de cases remplies */
+/*
+  Compteur.
+*/
 function updateStatus() {
 
   const cells = document.querySelectorAll(".cell");
@@ -202,11 +247,12 @@ function updateStatus() {
     `${filled} case${filled > 1 ? "s" : ""} remplie${filled > 1 ? "s" : ""}`;
 }
 
-/* Vérification des réponses */
+/*
+  Vérification.
+*/
 function check() {
 
   let correct = 0;
-  let answered = 0;
   let total = 0;
 
   document.querySelectorAll(".cell").forEach(cell => {
@@ -224,16 +270,14 @@ function check() {
 
     cell.classList.remove("correct", "wrong");
 
-    if (cell.value !== "") {
+    if (cell.value === expected) {
 
-      answered++;
+      cell.classList.add("correct");
+      correct++;
 
-      if (cell.value === expected) {
-        cell.classList.add("correct");
-        correct++;
-      } else {
-        cell.classList.add("wrong");
-      }
+    } else if (cell.value !== "") {
+
+      cell.classList.add("wrong");
     }
   });
 
@@ -248,13 +292,15 @@ function check() {
 
     alert(
       `Résultat : ${correct} bonne(s) réponse(s) sur ${total}.\n\n` +
-      "Les cases vertes sont correctes.\n" +
-      "Les cases rouges sont à corriger."
+      "🟩 Les cases vertes sont correctes.\n" +
+      "🟥 Les cases rouges sont à corriger."
     );
   }
 }
 
-/* Effacer toute la grille */
+/*
+  Effacer.
+*/
 function clearGrid() {
 
   if (!confirm("Effacer toutes les réponses ?")) {
@@ -278,5 +324,4 @@ function clearGrid() {
   updateStatus();
 }
 
-/* Initialisation du compteur */
 updateStatus();
