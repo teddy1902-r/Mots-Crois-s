@@ -4,10 +4,9 @@ const COLS = 14;
 const board = document.getElementById("board");
 const status = document.getElementById("status");
 
-/*
-  Positions EXACTES relevées sur ton image.
-  L'image fait 1555 × 1012 pixels.
-*/
+let direction = "horizontal";
+
+/* Positions de la grille */
 const X = [
   28, 135, 244, 353, 461, 567, 675,
   786, 893, 1001, 1107, 1216, 1323, 1432, 1538
@@ -18,10 +17,7 @@ const Y = [
   561, 667, 774, 885, 990
 ];
 
-/*
-  Cases contenant les indices.
-  Elles restent non saisissables.
-*/
+/* Cases contenant les indices */
 const blocked = new Set([
   "0,0", "0,2", "0,4", "0,6", "0,8", "0,10", "0,12",
   "1,10",
@@ -34,9 +30,7 @@ const blocked = new Set([
   "8,0", "8,7"
 ]);
 
-/*
-  Solutions.
-*/
+/* Solution */
 const solution = [
   [null,"S",null,"P",null,"E",null,"K",null,"B",null,"G",null,"G"],
   ["D","E","T","R","A","C","T","E","U","R",null,"R","A","I"],
@@ -49,9 +43,7 @@ const solution = [
   [null,"C","A","C","T","U","S",null,"S","E","D","U","I","T"]
 ];
 
-/*
-  Création des cases.
-*/
+/* Création des cases */
 for (let row = 0; row < ROWS; row++) {
 
   for (let col = 0; col < COLS; col++) {
@@ -72,9 +64,6 @@ for (let row = 0; row < ROWS; row++) {
     input.dataset.r = row;
     input.dataset.c = col;
 
-    /*
-      Position exacte basée sur l'image.
-    */
     input.style.left = `${X[col] / 1555 * 100}%`;
     input.style.top = `${Y[row] / 1012 * 100}%`;
 
@@ -84,15 +73,10 @@ for (let row = 0; row < ROWS; row++) {
     input.style.height =
       `${(Y[row + 1] - Y[row]) / 1012 * 100}%`;
 
-    /*
-      Récupérer une réponse déjà enregistrée.
-    */
     input.value =
       localStorage.getItem(storageKey(row, col)) || "";
 
-    /*
-      Écriture d'une lettre.
-    */
+    /* Écriture */
     input.addEventListener("input", function () {
 
       this.value = this.value
@@ -114,33 +98,49 @@ for (let row = 0; row < ROWS; row++) {
       }
     });
 
-    /*
-      Navigation avec les flèches.
-    */
+    /* Double-clic : changer de direction */
+    input.addEventListener("dblclick", function(event) {
+
+      event.preventDefault();
+
+      if (direction === "horizontal") {
+        direction = "vertical";
+      } else {
+        direction = "horizontal";
+      }
+
+      this.focus();
+    });
+
+    /* Navigation clavier */
     input.addEventListener("keydown", function(event) {
 
       if (event.key === "ArrowRight") {
         event.preventDefault();
+        direction = "horizontal";
         focusCell(row, col + 1);
       }
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
+        direction = "horizontal";
         focusCell(row, col - 1);
       }
 
       if (event.key === "ArrowDown") {
         event.preventDefault();
+        direction = "vertical";
         focusCell(row + 1, col);
       }
 
       if (event.key === "ArrowUp") {
         event.preventDefault();
+        direction = "vertical";
         focusCell(row - 1, col);
       }
 
       if (event.key === "Backspace" && this.value === "") {
-        focusPrevious(row, col);
+        goPrevious(row, col);
       }
     });
 
@@ -148,16 +148,12 @@ for (let row = 0; row < ROWS; row++) {
   }
 }
 
-/*
-  Clé de sauvegarde.
-*/
+/* Clé de sauvegarde */
 function storageKey(row, col) {
   return `mots-croises-r${row}c${col}`;
 }
 
-/*
-  Sélectionner une case.
-*/
+/* Sélectionner une case */
 function focusCell(row, col) {
 
   if (
@@ -182,59 +178,57 @@ function focusCell(row, col) {
   }
 }
 
-/*
-  Case suivante.
-*/
+/* Case suivante */
 function goNext(row, col) {
 
-  for (let c = col + 1; c < COLS; c++) {
+  if (direction === "vertical") {
 
-    if (!blocked.has(`${row},${c}`)) {
-      focusCell(row, c);
-      return;
+    for (let r = row + 1; r < ROWS; r++) {
+
+      if (!blocked.has(`${r},${col}`)) {
+        focusCell(r, col);
+        return;
+      }
     }
-  }
 
-  for (let r = row + 1; r < ROWS; r++) {
+  } else {
 
-    for (let c = 0; c < COLS; c++) {
+    for (let c = col + 1; c < COLS; c++) {
 
-      if (!blocked.has(`${r},${c}`)) {
-        focusCell(r, c);
+      if (!blocked.has(`${row},${c}`)) {
+        focusCell(row, c);
         return;
       }
     }
   }
 }
 
-/*
-  Case précédente.
-*/
-function focusPrevious(row, col) {
+/* Case précédente */
+function goPrevious(row, col) {
 
-  for (let c = col - 1; c >= 0; c--) {
+  if (direction === "vertical") {
 
-    if (!blocked.has(`${row},${c}`)) {
-      focusCell(row, c);
-      return;
+    for (let r = row - 1; r >= 0; r--) {
+
+      if (!blocked.has(`${r},${col}`)) {
+        focusCell(r, col);
+        return;
+      }
     }
-  }
 
-  for (let r = row - 1; r >= 0; r--) {
+  } else {
 
-    for (let c = COLS - 1; c >= 0; c--) {
+    for (let c = col - 1; c >= 0; c--) {
 
-      if (!blocked.has(`${r},${c}`)) {
-        focusCell(r, c);
+      if (!blocked.has(`${row},${c}`)) {
+        focusCell(row, c);
         return;
       }
     }
   }
 }
 
-/*
-  Compteur.
-*/
+/* Compteur */
 function updateStatus() {
 
   const cells = document.querySelectorAll(".cell");
@@ -247,9 +241,7 @@ function updateStatus() {
     `${filled} case${filled > 1 ? "s" : ""} remplie${filled > 1 ? "s" : ""}`;
 }
 
-/*
-  Vérification.
-*/
+/* Vérification */
 function check() {
 
   let correct = 0;
@@ -298,9 +290,7 @@ function check() {
   }
 }
 
-/*
-  Effacer.
-*/
+/* Effacer */
 function clearGrid() {
 
   if (!confirm("Effacer toutes les réponses ?")) {
