@@ -5,8 +5,9 @@ const board = document.getElementById("board");
 const status = document.getElementById("status");
 
 let direction = "horizontal";
+let lastCell = null;
 
-/* Positions de la grille */
+/* Positions exactes de la grille */
 const X = [
   28, 135, 244, 353, 461, 567, 675,
   786, 893, 1001, 1107, 1216, 1323, 1432, 1538
@@ -17,7 +18,7 @@ const Y = [
   561, 667, 774, 885, 990
 ];
 
-/* Cases contenant les indices */
+/* Cases noires / indices */
 const blocked = new Set([
   "0,0", "0,2", "0,4", "0,6", "0,8", "0,10", "0,12",
   "1,10",
@@ -76,6 +77,29 @@ for (let row = 0; row < ROWS; row++) {
     input.value =
       localStorage.getItem(storageKey(row, col)) || "";
 
+    /* Clic sur une case */
+    input.addEventListener("click", function () {
+
+      const current = `${row},${col}`;
+
+      /*
+       * Si on clique deux fois sur la même case,
+       * on change de direction.
+       */
+      if (lastCell === current) {
+
+        direction =
+          direction === "horizontal"
+            ? "vertical"
+            : "horizontal";
+
+      }
+
+      lastCell = current;
+
+      this.focus();
+    });
+
     /* Écriture */
     input.addEventListener("input", function () {
 
@@ -98,49 +122,64 @@ for (let row = 0; row < ROWS; row++) {
       }
     });
 
-    /* Double-clic : changer de direction */
-    input.addEventListener("dblclick", function(event) {
-
-      event.preventDefault();
-
-      if (direction === "horizontal") {
-        direction = "vertical";
-      } else {
-        direction = "horizontal";
-      }
-
-      this.focus();
-    });
-
     /* Navigation clavier */
     input.addEventListener("keydown", function(event) {
 
       if (event.key === "ArrowRight") {
+
         event.preventDefault();
+
         direction = "horizontal";
+
         focusCell(row, col + 1);
+
+        return;
       }
 
       if (event.key === "ArrowLeft") {
+
         event.preventDefault();
+
         direction = "horizontal";
+
         focusCell(row, col - 1);
+
+        return;
       }
 
       if (event.key === "ArrowDown") {
+
         event.preventDefault();
+
         direction = "vertical";
+
         focusCell(row + 1, col);
+
+        return;
       }
 
       if (event.key === "ArrowUp") {
+
         event.preventDefault();
+
         direction = "vertical";
+
         focusCell(row - 1, col);
+
+        return;
       }
 
-      if (event.key === "Backspace" && this.value === "") {
-        goPrevious(row, col);
+      if (event.key === "Backspace") {
+
+        if (this.value === "") {
+
+          event.preventDefault();
+
+          goPrevious(row, col);
+
+        }
+
+        return;
       }
     });
 
@@ -148,10 +187,13 @@ for (let row = 0; row < ROWS; row++) {
   }
 }
 
+
 /* Clé de sauvegarde */
 function storageKey(row, col) {
+
   return `mots-croises-r${row}c${col}`;
 }
+
 
 /* Sélectionner une case */
 function focusCell(row, col) {
@@ -174,59 +216,81 @@ function focusCell(row, col) {
   );
 
   if (cell) {
+
+    lastCell = `${row},${col}`;
+
     cell.focus();
   }
 }
+
 
 /* Case suivante */
 function goNext(row, col) {
 
   if (direction === "vertical") {
 
-    for (let r = row + 1; r < ROWS; r++) {
+    const nextRow = row + 1;
 
-      if (!blocked.has(`${r},${col}`)) {
-        focusCell(r, col);
-        return;
-      }
+    /*
+     * On s'arrête dès qu'on rencontre
+     * une case noire.
+     */
+    if (
+      nextRow < ROWS &&
+      !blocked.has(`${nextRow},${col}`)
+    ) {
+
+      focusCell(nextRow, col);
     }
 
   } else {
 
-    for (let c = col + 1; c < COLS; c++) {
+    const nextCol = col + 1;
 
-      if (!blocked.has(`${row},${c}`)) {
-        focusCell(row, c);
-        return;
-      }
+    /*
+     * On s'arrête dès qu'on rencontre
+     * une case noire.
+     */
+    if (
+      nextCol < COLS &&
+      !blocked.has(`${row},${nextCol}`)
+    ) {
+
+      focusCell(row, nextCol);
     }
   }
 }
+
 
 /* Case précédente */
 function goPrevious(row, col) {
 
   if (direction === "vertical") {
 
-    for (let r = row - 1; r >= 0; r--) {
+    const previousRow = row - 1;
 
-      if (!blocked.has(`${r},${col}`)) {
-        focusCell(r, col);
-        return;
-      }
+    if (
+      previousRow >= 0 &&
+      !blocked.has(`${previousRow},${col}`)
+    ) {
+
+      focusCell(previousRow, col);
     }
 
   } else {
 
-    for (let c = col - 1; c >= 0; c--) {
+    const previousCol = col - 1;
 
-      if (!blocked.has(`${row},${c}`)) {
-        focusCell(row, c);
-        return;
-      }
+    if (
+      previousCol >= 0 &&
+      !blocked.has(`${row},${previousCol}`)
+    ) {
+
+      focusCell(row, previousCol);
     }
   }
 }
+
 
 /* Compteur */
 function updateStatus() {
@@ -240,6 +304,7 @@ function updateStatus() {
   status.textContent =
     `${filled} case${filled > 1 ? "s" : ""} remplie${filled > 1 ? "s" : ""}`;
 }
+
 
 /* Vérification */
 function check() {
@@ -265,6 +330,7 @@ function check() {
     if (cell.value === expected) {
 
       cell.classList.add("correct");
+
       correct++;
 
     } else if (cell.value !== "") {
@@ -290,6 +356,7 @@ function check() {
   }
 }
 
+
 /* Effacer */
 function clearGrid() {
 
@@ -313,5 +380,6 @@ function clearGrid() {
 
   updateStatus();
 }
+
 
 updateStatus();
