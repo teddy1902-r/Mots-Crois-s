@@ -1,27 +1,282 @@
-const COLS=14, ROWS=9;
-const blocked=new Set(new Set(['0,0', '0,2', '0,4', '0,6', '0,8', '1,6', '2,0', '4,0', '4,5', '5,7', '6,0', '6,3', '7,2', '7,8', '8,0', '8,4', '9,6', '10,0', '10,1', '10,2', '11,5', '11,7', '12,0', '12,4', '13,3']));
-const solution=[[None, 'S', None, 'P', None, 'E', None, 'K', None, 'B', None, 'G', None, 'G'], ['D', 'E', 'T', 'R', 'A', 'C', 'T', 'E', 'U', 'R', None, 'R', 'A', 'I'], [None, 'C', 'R', 'O', 'I', 'R', 'E', None, 'R', 'I', 'R', 'A', 'I', 'S'], ['C', 'H', 'A', 'N', 'G', 'E', None, 'B', 'E', 'S', 'A', 'C', 'E', None], [None, 'E', 'C', 'O', 'U', 'T', 'A', 'I', None, 'E', 'S', 'E', None, 'C'], ['A', 'R', 'T', 'S', None, 'E', 'I', 'D', 'E', 'R', 'S', None, 'T', 'A'], [None, None, 'E', 'T', 'E', 'R', 'N', 'E', 'L', None, 'I', 'R', 'A', 'N'], ['C', 'A', 'R', 'I', 'S', None, 'E', 'T', 'U', 'V', 'E', None, 'P', 'O'], [None, 'C', 'A', 'C', 'T', 'U', 'S', None, 'S', 'E', 'D', 'U', 'I', 'T']];
-const board=document.getElementById('board'),status=document.getElementById('status');
-function key(r,c){return `r${r}c${c}`}
-for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
- if(blocked.has(`${r},${c}`))continue;
- const x=document.createElement('input');x.className='cell';x.maxLength=1;
- x.autocomplete='off';x.dataset.r=r;x.dataset.c=c;
- x.style.left=(c*100/COLS)+'%';x.style.top=(r*100/ROWS)+'%';
- x.value=localStorage.getItem(key(r,c))||'';
- x.addEventListener('input',()=>{x.value=x.value.replace(/[^a-zA-ZÀ-ÿ]/g,'').slice(-1).toUpperCase();
- localStorage.setItem(key(r,c),x.value);x.classList.remove('correct','wrong');update();if(x.value)next(r,c)});
- x.addEventListener('keydown',e=>{if(e.key==='ArrowRight')focus(r,c+1);if(e.key==='ArrowLeft')focus(r,c-1);if(e.key==='ArrowDown')focus(r+1,c);if(e.key==='ArrowUp')focus(r-1,c);});
- board.appendChild(x);
+const COLS = 14;
+const ROWS = 9;
+
+/* Cases réservées aux indices : elles ne sont pas saisissables */
+const blocked = new Set([
+  "0,0", "0,2", "0,4", "0,6", "0,8", "0,10", "0,12",
+  "1,10",
+  "2,0", "2,7",
+  "3,6", "3,13",
+  "4,0", "4,8", "4,12",
+  "5,4", "5,11",
+  "6,0", "6,1", "6,9",
+  "7,5", "7,11",
+  "8,0", "8,7"
+]);
+
+/* Solution de la grille */
+const solution = [
+  [null, "S", null, "P", null, "E", null, "K", null, "B", null, "G", null, "G"],
+  ["D", "E", "T", "R", "A", "C", "T", "E", "U", "R", null, "R", "A", "I"],
+  [null, "C", "R", "O", "I", "R", "E", null, "R", "I", "R", "A", "I", "S"],
+  ["C", "H", "A", "N", "G", "E", null, "B", "E", "S", "A", "C", "E", null],
+  [null, "E", "C", "O", "U", "T", "A", "I", null, "E", "S", "E", null, "C"],
+  ["A", "R", "T", "S", null, "E", "I", "D", "E", "R", "S", null, "T", "A"],
+  [null, null, "E", "T", "E", "R", "N", "E", "L", null, "I", "R", "A", "N"],
+  ["C", "A", "R", "I", "S", null, "E", "T", "U", "V", "E", null, "P", "O"],
+  [null, "C", "A", "C", "T", "U", "S", null, "S", "E", "D", "U", "I", "T"]
+];
+
+const board = document.getElementById("board");
+const status = document.getElementById("status");
+
+/* Clé utilisée pour sauvegarder chaque lettre */
+function storageKey(row, col) {
+  return `mots-croises-r${row}c${col}`;
 }
-function focus(r,c){const e=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);if(e)e.focus()}
-function next(r,c){for(let n=c+1;n<COLS;n++)if(!blocked.has(`${r},${n}`)){focus(r,n);return}}
-function update(){const n=[...document.querySelectorAll('.cell')].filter(x=>x.value).length;status.textContent=`${n} case${n>1?'s':''} remplie${n>1?'s':''}`}
-function check(){
- let ok=0,total=0;
- document.querySelectorAll('.cell').forEach(x=>{let r=+x.dataset.r,c=+x.dataset.c,s=solution[r][c];if(!s)return;
- total++;x.classList.remove('correct','wrong');if(x.value){if(x.value===s){x.classList.add('correct');ok++}else x.classList.add('wrong')}})
- alert(ok===total ? '🎉 Bravo ! La grille est entièrement correcte.' : `${ok} bonne${ok>1?'s':''} réponse${ok>1?'s':''} sur ${total}. Les cases vertes sont correctes, les rouges sont à corriger.`);
+
+/* Création des cases */
+for (let row = 0; row < ROWS; row++) {
+  for (let col = 0; col < COLS; col++) {
+
+    /* Les cases d'indices restent bloquées */
+    if (blocked.has(`${row},${col}`)) {
+      continue;
+    }
+
+    const input = document.createElement("input");
+
+    input.type = "text";
+    input.className = "cell";
+    input.maxLength = 1;
+    input.autocomplete = "off";
+    input.spellcheck = false;
+
+    input.dataset.r = row;
+    input.dataset.c = col;
+
+    /* Positionnement dans la grille */
+    input.style.left = `${col * 100 / COLS}%`;
+    input.style.top = `${row * 100 / ROWS}%`;
+
+    /* Récupérer une ancienne réponse */
+    input.value = localStorage.getItem(storageKey(row, col)) || "";
+
+    /* Quand on écrit une lettre */
+    input.addEventListener("input", function () {
+
+      /* Une seule lettre, en majuscule */
+      this.value = this.value
+        .replace(/[^a-zA-ZÀ-ÿ]/g, "")
+        .slice(-1)
+        .toUpperCase();
+
+      /* Sauvegarde automatique */
+      localStorage.setItem(
+        storageKey(row, col),
+        this.value
+      );
+
+      /* Enlever la couleur précédente */
+      this.classList.remove("correct", "wrong");
+
+      updateStatus();
+
+      /* Passer automatiquement à la case suivante */
+      if (this.value !== "") {
+        goNext(row, col);
+      }
+    });
+
+    /* Navigation avec les flèches du clavier */
+    input.addEventListener("keydown", function (event) {
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        focusCell(row, col + 1);
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        focusCell(row, col - 1);
+      }
+
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        focusCell(row + 1, col);
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        focusCell(row - 1, col);
+      }
+
+      /* Retour arrière */
+      if (event.key === "Backspace" && this.value === "") {
+        focusPrevious(row, col);
+      }
+    });
+
+    board.appendChild(input);
+  }
 }
-function clearGrid(){if(!confirm('Effacer toutes les réponses ?'))return;document.querySelectorAll('.cell').forEach(x=>{x.value='';x.classList.remove('correct','wrong');localStorage.removeItem(key(x.dataset.r,x.dataset.c))});update()}
-update();
+
+/* Aller sur une case précise */
+function focusCell(row, col) {
+
+  if (row < 0 || row >= ROWS || col < 0 || col >= COLS) {
+    return;
+  }
+
+  if (blocked.has(`${row},${col}`)) {
+    return;
+  }
+
+  const cell = document.querySelector(
+    `[data-r="${row}"][data-c="${col}"]`
+  );
+
+  if (cell) {
+    cell.focus();
+  }
+}
+
+/* Aller à la case suivante */
+function goNext(row, col) {
+
+  /* Chercher vers la droite */
+  for (let nextCol = col + 1; nextCol < COLS; nextCol++) {
+
+    if (!blocked.has(`${row},${nextCol}`)) {
+      focusCell(row, nextCol);
+      return;
+    }
+  }
+
+  /* Puis passer à la ligne suivante */
+  for (let nextRow = row + 1; nextRow < ROWS; nextRow++) {
+
+    for (let nextCol = 0; nextCol < COLS; nextCol++) {
+
+      if (!blocked.has(`${nextRow},${nextCol}`)) {
+        focusCell(nextRow, nextCol);
+        return;
+      }
+    }
+  }
+}
+
+/* Retour à la case précédente */
+function focusPrevious(row, col) {
+
+  for (let previousCol = col - 1; previousCol >= 0; previousCol--) {
+
+    if (!blocked.has(`${row},${previousCol}`)) {
+      focusCell(row, previousCol);
+      return;
+    }
+  }
+
+  for (let previousRow = row - 1; previousRow >= 0; previousRow--) {
+
+    for (let previousCol = COLS - 1; previousCol >= 0; previousCol--) {
+
+      if (!blocked.has(`${previousRow},${previousCol}`)) {
+        focusCell(previousRow, previousCol);
+        return;
+      }
+    }
+  }
+}
+
+/* Compteur de cases remplies */
+function updateStatus() {
+
+  const cells = document.querySelectorAll(".cell");
+
+  const filled = [...cells].filter(
+    cell => cell.value !== ""
+  ).length;
+
+  status.textContent =
+    `${filled} case${filled > 1 ? "s" : ""} remplie${filled > 1 ? "s" : ""}`;
+}
+
+/* Vérification des réponses */
+function check() {
+
+  let correct = 0;
+  let answered = 0;
+  let total = 0;
+
+  document.querySelectorAll(".cell").forEach(cell => {
+
+    const row = Number(cell.dataset.r);
+    const col = Number(cell.dataset.c);
+
+    const expected = solution[row][col];
+
+    if (!expected) {
+      return;
+    }
+
+    total++;
+
+    cell.classList.remove("correct", "wrong");
+
+    if (cell.value !== "") {
+
+      answered++;
+
+      if (cell.value === expected) {
+        cell.classList.add("correct");
+        correct++;
+      } else {
+        cell.classList.add("wrong");
+      }
+    }
+  });
+
+  if (correct === total) {
+
+    alert(
+      "🎉 BRAVO !\n\n" +
+      "La grille est entièrement correcte !"
+    );
+
+  } else {
+
+    alert(
+      `Résultat : ${correct} bonne(s) réponse(s) sur ${total}.\n\n` +
+      "Les cases vertes sont correctes.\n" +
+      "Les cases rouges sont à corriger."
+    );
+  }
+}
+
+/* Effacer toute la grille */
+function clearGrid() {
+
+  if (!confirm("Effacer toutes les réponses ?")) {
+    return;
+  }
+
+  document.querySelectorAll(".cell").forEach(cell => {
+
+    cell.value = "";
+
+    cell.classList.remove("correct", "wrong");
+
+    localStorage.removeItem(
+      storageKey(
+        cell.dataset.r,
+        cell.dataset.c
+      )
+    );
+  });
+
+  updateStatus();
+}
+
+/* Initialisation du compteur */
+updateStatus();
