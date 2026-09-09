@@ -1,0 +1,15 @@
+<header>
+  <h1>🧩 Mots croisés</h1>
+  <p>Remplissez directement la grille. Vos réponses sont enregistrées sur cet appareil.</p>
+</header>
+
+<main>
+  <div class="toolbar">
+    <button onclick="check()">✓ Vérifier</button>
+    <button class="secondary" onclick="clearGrid()">Effacer</button>
+    <button class="secondary" onclick="window.print()">Imprimer</button>
+    <span id="status">0 case remplie</span>
+  </div>
+
+  <div class="board" id="board"></div>
+</main>
