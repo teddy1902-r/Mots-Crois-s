@@ -58,6 +58,13 @@
     directionButton.setAttribute("aria-pressed", String(value === "vertical"));
     highlight();
   }
+  function chooseDirection(cell) {
+    if (!along(cell, -1) && !along(cell)) {
+      const [dr, dc] = direction === "horizontal" ? [1, 0] : [0, 1];
+      if (neighbor(cell, dr, dc) || neighbor(cell, -dr, -dc))
+        setDirection(direction === "horizontal" ? "vertical" : "horizontal");
+    }
+  }
   function focus(cell) {
     if (!cell) return;
     cell.focus();
@@ -65,6 +72,7 @@
   }
   function write(cell, letter) {
     cell.value = letter;
+    cell.dataset.savedValue = letter;
     cell.classList.remove("correct", "wrong");
     cell.removeAttribute("aria-invalid");
     storage("write", cell);
@@ -110,20 +118,16 @@
       cell.style.width = ((X[c + 1] - X[c] - 2) / 1555 * 100) + "%";
       cell.style.height = ((Y[r + 1] - Y[r] - 2) / 1012 * 100) + "%";
       cell.value = normalize(storage("read", cell)).slice(0, 1);
+      cell.dataset.savedValue = cell.value;
       cells.set(key(r, c), cell);
       cell.addEventListener("focus", () => {
         active = cell;
         cell.select();
+        chooseDirection(cell);
         highlight();
       });
       cell.addEventListener("click", () => {
-        // An isolated top-row cell belongs to a vertical word.
-        // Repeated clicks never toggle direction at an intersection.
-        if (!along(cell, -1) && !along(cell)) {
-          const [dr, dc] = direction === "horizontal" ? [1, 0] : [0, 1];
-          if (neighbor(cell, dr, dc) || neighbor(cell, -dr, -dc))
-            setDirection(direction === "horizontal" ? "vertical" : "horizontal");
-        }
+        chooseDirection(cell);
         cell.select();
       });
       cell.addEventListener("keydown", event => {
@@ -161,23 +165,39 @@
       });
       cell.addEventListener("input", event => {
         if (event.isComposing || composing) return;
-        const letter = normalize(event.data ?? cell.value).slice(-1);
-        if (completedComposition !== null && letter === completedComposition) {
-          completedComposition = null;
-          write(cell, letter);
+        // Some mobile keyboards send non-cancelable beforeinput events.
+        // Deletion must never be interpreted as a new letter or move forward.
+        if (event.inputType?.startsWith("delete")) {
+          const previousValue = cell.dataset.savedValue;
+          write(cell, "");
+          if (!previousValue && event.inputType === "deleteContentBackward") erase(cell, true);
           return;
         }
-        if (letter) enter(cell, letter);
-        else write(cell, "");
+        const letters = normalize(event.data ?? cell.value);
+        if (completedComposition !== null && letters === completedComposition) {
+          completedComposition = null;
+          write(cell, letters.slice(-1));
+          return;
+        }
+        if (letters) enter(cell, letters);
+        else cell.value = cell.dataset.savedValue;
       });
       cell.addEventListener("compositionstart", () => { composing = true; completedComposition = null; });
-      cell.addEventListener("compositionend", () => {
+      cell.addEventListener("compositionend", event => {
         composing = false;
-        completedComposition = normalize(cell.value).slice(-1);
+        // The committed text may differ from the input's entire value.
+        completedComposition = normalize(event.data ?? cell.value).slice(-1);
+        if (!completedComposition) {
+          cell.value = cell.dataset.savedValue;
+          completedComposition = null;
+          return;
+        }
         write(cell, completedComposition);
-        // Do not move focus until the composing keyboard finishes its final events.
+        const committedValue = completedComposition;
+        const next = along(cell);
+        // Wait for the final input event, without stealing a later selection.
         setTimeout(() => {
-          if (document.activeElement === cell && cell.value) focus(along(cell));
+          if (document.activeElement === cell && cell.value === committedValue) focus(next);
           completedComposition = null;
         }, 0);
       });
