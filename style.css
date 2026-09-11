@@ -1,201 +1,39 @@
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: #eef2f7;
-  color: #172033;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-
-header {
-  background: #ffffff;
-  border-bottom: 1px solid #d8dee8;
-  padding: 18px;
-  text-align: center;
-}
-
-h1 {
-  margin: 0 0 5px;
-  font-size: clamp(22px, 4vw, 34px);
-}
-
-header p {
-  margin: 0;
-  color: #5f6978;
-}
-
-main {
-  max-width: 1500px;
-  margin: auto;
-  padding: 14px;
-}
-
-.toolbar {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-button {
-  border: 0;
-  border-radius: 9px;
-  padding: 10px 14px;
-  font-weight: 700;
-  cursor: pointer;
-  background: #173b70;
-  color: white;
-}
-
-button.secondary {
-  background: #e5eaf1;
-  color: #172033;
-}
-
-#status {
-  margin-left: auto;
-  font-size: 14px;
-  color: #596476;
-}
-
-/* =========================
-   GRILLE
-   ========================= */
-
-.board {
-  position: relative;
-  width: 100%;
-  max-width: 1500px;
-  margin: 0 auto;
-
-  background-image: url("grille.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 100% 100%;
-
-  /*
-    14 colonnes × 9 lignes
-    Les dimensions restent identiques
-    jusqu'à la dernière case.
-  */
-  aspect-ratio: 14 / 9;
-
-  overflow: hidden;
-}
-
-/* =========================
-   CASES SAISISSABLES
-   ========================= */
-
-.cell {
-  position: absolute;
-
-  width: calc(100% / 14);
-  height: calc(100% / 9);
-
-  margin: 0;
-  padding: 0;
-
-  border: 0;
-  outline: none;
-
-  background: transparent;
-
-  z-index: 10;
-  pointer-events: auto;
-  cursor: text;
-
-  /* Centrage horizontal */
-  text-align: center;
-
-  /* Centrage vertical */
-  line-height: 1;
-
-  /* Texte */
-  text-transform: uppercase;
-  font-size: clamp(16px, 2.6vw, 32px);
-  font-weight: 800;
-  font-family: Arial, Helvetica, sans-serif;
-  color: #172033;
-
-  /* Centrage parfait */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Case sélectionnée */
-
-.cell:focus {
-  background: rgba(255, 248, 168, 0.75);
-  box-shadow: inset 0 0 0 3px #173b70;
-}
-
-/* Bonne réponse */
-
-.cell.correct {
-  background: rgba(191, 231, 197, 0.6);
-}
-
-/* Mauvaise réponse */
-
-.cell.wrong {
-  background: rgba(255, 197, 197, 0.6);
-}
-
-/* =========================
-   PETITS ÉCRANS
-   ========================= */
-
+* { box-sizing: border-box; }
+body { margin: 0; background: #eef2f7; color: #172033; font: 1rem system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+header { background: #fff; border-bottom: 1px solid #d8dee8; padding: 18px; text-align: center; }
+h1 { margin: 0 0 5px; font-size: clamp(1.375rem, 4vw, 2.125rem); }
+header p, .help, .mobile-help { color: #4c586b; line-height: 1.5; }
+header p { margin: 0; }
+main { max-width: 1555px; margin: auto; padding: 14px; }
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+button { border: 0; border-radius: 9px; min-height: 44px; padding: 10px 14px; font: inherit; font-weight: 700; cursor: pointer; background: #173b70; color: #fff; touch-action: manipulation; }
+button.secondary { background: #dfe6f0; color: #172033; }
+button:focus-visible, .board-scroll:focus-visible { outline: 3px solid #173b70; outline-offset: 3px; }
+#direction[aria-pressed="true"] { background: #173b70; color: #fff; }
+#status { margin-left: auto; font-size: .875rem; color: #4c586b; }
+.help { margin: 8px 0; font-size: .875rem; }
+.mobile-help { display: none; font-size: .875rem; }
+.board-scroll { width: 100%; overflow-x: auto; }
+/* The image and hit targets share the original image coordinate system. */
+.board { position: relative; width: 100%; min-width: 700px; margin: 0 auto; aspect-ratio: 1555 / 1012; overflow: hidden; }
+.board-image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.play-grid { position: absolute; inset: 0; pointer-events: none; }
+.cell { position: absolute; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; outline: none; text-align: center; font: 800 clamp(1rem, 2.5vw, 2rem) / 1 Arial, Helvetica, sans-serif; color: #172033; text-transform: uppercase; cursor: text; pointer-events: auto; touch-action: manipulation; appearance: none; -webkit-appearance: none; caret-color: #173b70; }
+.cell.in-word { background: rgba(88, 150, 235, .16); }
+.cell.correct { background: rgba(124, 202, 137, .35); }
+.cell.wrong { background: rgba(240, 107, 107, .32); }
+/* Selection stays visible after checking answers. */
+.cell:focus { z-index: 2; background: rgba(255, 238, 112, .7); box-shadow: inset 0 0 0 3px #173b70; }
 @media (max-width: 700px) {
-
-  main {
-    padding: 8px;
-  }
-
-  #status {
-    width: 100%;
-    margin-left: 0;
-  }
-
-  .board {
-    width: 100%;
-    aspect-ratio: 14 / 9;
-  }
-
-  .cell {
-    font-size: clamp(12px, 5vw, 24px);
-  }
+  main { padding: 8px; }
+  #status { width: 100%; margin-left: 0; }
+  .mobile-help { display: block; margin: 8px 0; }
 }
-
-/* =========================
-   IMPRESSION
-   ========================= */
-
 @media print {
-
-  header,
-  .toolbar {
-    display: none;
-  }
-
-  body {
-    background: white;
-  }
-
-  main {
-    padding: 0;
-  }
-
-  .cell {
-    display: none;
-  }
-
-  .board {
-    width: 100%;
-    max-width: none;
-  }
+  header, .toolbar, .help, .mobile-help { display: none; }
+  body { background: #fff; }
+  main { padding: 0; }
+  .board-scroll { overflow: visible; }
+  .board { width: 100%; min-width: 0; max-width: none; }
+  .cell { display: none; }
 }
