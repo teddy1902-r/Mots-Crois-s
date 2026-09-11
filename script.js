@@ -1,5 +1,7 @@
 (() => {
   "use strict";
+  document.title = "Mots fléchés";
+  document.querySelector("header h1")?.remove();
   const X = [29,137,245,353,461,569,677,786,893,1001,1109,1217,1325,1432,1540];
   const Y = [24,132,240,347,454,562,669,777,886,992];
   const solution = [
