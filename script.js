@@ -17,6 +17,7 @@
   const status = document.getElementById("status");
   const directionButton = document.getElementById("direction");
   const cells = new Map();
+  const words = [];
   let direction = "horizontal", active = null;
   const normalize = text => String(text ?? "").normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z]/g, "");
@@ -41,7 +42,18 @@
   }
   function updateStatus() {
     const count = [...cells.values()].filter(cell => cell.value).length;
-    status.textContent = count + " / " + cells.size + " cases remplies";
+    const validated = new Set();
+    let correctWords = 0;
+    for (const word of words) {
+      if (word.every(cell => cell.value === solution[Number(cell.dataset.r)][Number(cell.dataset.c)])) {
+        correctWords++;
+        word.forEach(cell => validated.add(cell));
+      }
+    }
+    cells.forEach(cell => cell.classList.toggle("correct", validated.has(cell)));
+    const complete = words.length > 0 && correctWords === words.length;
+    status.textContent = complete ? "🎉 Bravo ! La grille est entièrement correcte !" :
+      count + " / " + cells.size + " cases remplies — " + correctWords + " / " + words.length + " mots validés";
   }
   function highlight() {
     cells.forEach(cell => cell.classList.remove("in-word"));
@@ -213,20 +225,19 @@
     setDirection(direction === "horizontal" ? "vertical" : "horizontal");
     if (active) focus(active);
   });
-  document.getElementById("check").addEventListener("click", () => {
-    let correct = 0;
+  // Validate complete horizontal and vertical words, never individual letters.
+  for (const [dr, dc] of [[0, 1], [1, 0]]) {
     cells.forEach(cell => {
-      const valid = cell.value === solution[Number(cell.dataset.r)][Number(cell.dataset.c)];
-      cell.classList.toggle("correct", valid);
-      cell.classList.toggle("wrong", Boolean(cell.value) && !valid);
-      if (cell.value && !valid) cell.setAttribute("aria-invalid", "true");
-      else cell.removeAttribute("aria-invalid");
-      if (valid) correct++;
+      if (neighbor(cell, -dr, -dc)) return;
+      const word = [];
+      for (let next = cell; next; next = neighbor(next, dr, dc)) word.push(next);
+      if (word.length > 1) words.push(word);
     });
-    alert(correct === cells.size ? "🎉 BRAVO ! La grille est entièrement correcte !" :
-      "Résultat : " + correct + " bonne(s) réponse(s) sur " + cells.size +
-      ".\n\nLes cases vertes sont correctes. Les cases rouges sont à corriger.");
-  });
+  }
+  document.getElementById("check")?.remove();
+  document.getElementById("help").textContent =
+    "Touchez une case pour écrire. Chaque mot complet devient vert lorsqu’il correspond à la solution. " +
+    "Changez de sens avec le bouton ou la touche Entrée. Les flèches déplacent la sélection ; la saisie s’arrête à la fin du mot.";
   document.getElementById("clear").addEventListener("click", () => {
     if (!confirm("Effacer toutes les réponses ?")) return;
     cells.forEach(cell => write(cell, ""));
