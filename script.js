@@ -40,12 +40,21 @@
   function along(cell, step = 1) {
     return neighbor(cell, direction === "vertical" ? step : 0, direction === "horizontal" ? step : 0);
   }
+  // Un mot n'est validé que lorsqu'il est complet et correspond exactement à la solution.
+  // Cette vérification est relancée automatiquement après chaque saisie.
+  function wordMatchesSolution(word) {
+    return word.length > 1 && word.every(cell => {
+      const answer = solution[Number(cell.dataset.r)][Number(cell.dataset.c)];
+      return cell.value !== "" && cell.value === answer;
+    });
+  }
+
   function updateStatus() {
     const count = [...cells.values()].filter(cell => cell.value).length;
     const validated = new Set();
     let correctWords = 0;
     for (const word of words) {
-      if (word.every(cell => cell.value === solution[Number(cell.dataset.r)][Number(cell.dataset.c)])) {
+      if (wordMatchesSolution(word)) {
         correctWords++;
         word.forEach(cell => validated.add(cell));
       }
