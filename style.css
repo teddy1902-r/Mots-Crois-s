@@ -41,6 +41,14 @@ button:focus-visible, .board-scroll:focus-visible { outline: 3px solid #173b70; 
 .cell.wrong { background: rgba(240, 107, 107, .32); }
 /* Selection stays visible after checking answers. */
 .cell:focus { z-index: 2; background: rgba(255, 238, 112, .7); box-shadow: inset 0 0 0 3px #173b70; }
+/* La case ligne 8, colonne 1 reste blanche dans tous les états. */
+.cell[data-r="7"][data-c="0"],
+.cell[data-r="7"][data-c="0"].in-word,
+.cell[data-r="7"][data-c="0"].correct,
+.cell[data-r="7"][data-c="0"].wrong,
+.cell[data-r="7"][data-c="0"]:focus {
+  background: #fff !important;
+}
 @media (max-width: 700px) {
   main { padding: 8px; }
   #status { width: 100%; margin-left: 0; }
