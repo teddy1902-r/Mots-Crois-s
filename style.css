@@ -28,6 +28,8 @@ button:focus-visible, .board-scroll:focus-visible { outline: 3px solid #173b70; 
   text-shadow: 0 0 1px rgba(0, 90, 35, .35);
 }
 .cell.wrong { background: rgba(240, 107, 107, .32); }
+/* Case en bas à gauche : masquer le jaune de l'image de fond. */
+.cell[data-r="8"][data-c="1"] { background: #fff; }
 /* Selection stays visible after checking answers. */
 .cell:focus { z-index: 2; background: rgba(255, 238, 112, .7); box-shadow: inset 0 0 0 3px #173b70; }
 @media (max-width: 700px) {
