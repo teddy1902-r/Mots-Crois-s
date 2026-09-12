@@ -17,8 +17,8 @@ button:focus-visible, .board-scroll:focus-visible { outline: 3px solid #173b70; 
 /* The image and hit targets share the original image coordinate system. */
 .board { position: relative; width: 100%; min-width: 700px; margin: 0 auto; aspect-ratio: 1555 / 1012; overflow: hidden; }
 .board-image { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; user-select: none; -webkit-user-drag: none; }
-/* Masque uniquement l'intérieur de la case ligne 8, colonne 1. */
-.board::after {
+/* Ligne 8 colonne 1 : fond blanc et flèche dans le même sens que ligne 2 colonne 1. */
+.board::before {
   content: "";
   position: absolute;
   left: 1.9293%;
@@ -26,6 +26,15 @@ button:focus-visible, .board-scroll:focus-visible { outline: 3px solid #173b70; 
   width: 6.8167%;
   height: 10.5731%;
   background: #fff;
+  pointer-events: none;
+}
+.board::after {
+  content: "→";
+  position: absolute;
+  left: 3.05%;
+  top: 78.1%;
+  font: 700 clamp(14px, 1.6vw, 24px) / 1 Arial, Helvetica, sans-serif;
+  color: #111;
   pointer-events: none;
 }
 .play-grid { position: absolute; inset: 0; pointer-events: none; }
